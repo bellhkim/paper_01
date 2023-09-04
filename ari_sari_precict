@@ -1,0 +1,22 @@
+# Prepare the training data
+train_data = df[(df['date'].dt.year >= 2011) & (df['date'].dt.year < 2022)][['date', '도발지수']].set_index('date')
+
+# Define the models
+models = {
+    "ARIMA": ARIMA(train_data['도발지수'], order=(5,1,0)),
+    "SARIMA": SARIMAX(train_data['도발지수'], order=(1, 1, 1), seasonal_order=(1, 1, 0, 12))
+}
+
+# Train and evaluate each model
+predictions = {}
+for model_name, model in models.items():
+    model_fit = model.fit()
+    pred = model_fit.predict(start=len(train_data), end=len(train_data)+360)  # Adjust here
+    predictions[model_name] = pred
+
+# Compare the predictions with the actual values
+rmse = {}
+for model_name, prediction in predictions.items():
+    rmse[model_name] = sqrt(mean_squared_error(actual_values, prediction))
+
+rmse, predictions
