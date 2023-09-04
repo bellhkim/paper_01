@@ -1,0 +1,131 @@
+merged_data = pd.merge(provocation_data, criticism_data, on='Date', how='inner')
+
+
+# Create a lag feature for the Criticism Index
+merged_data['criticism_lag1'] = merged_data['Criticism Index'].shift(1)
+
+# Create a lag feature for the Provocation Index (if desired)
+merged_data['provocation_lag1'] = merged_data['Provocation Index'].shift(1)
+
+
+
+train = merged_data[merged_data['Date'] < "2022-01-01"]
+test = merged_data[merged_data['Date'] >= "2022-01-01"]
+from sklearn.ensemble import RandomForestRegressor
+
+X_train = train[['criticism_lag1', 'provocation_lag1']]
+y_train = train['Provocation Index']
+
+model = RandomForestRegressor()
+model.fit(X_train, y_train)
+
+X_test = test[['criticism_lag1', 'provocation_lag1']]
+predictions = model.predict(X_test)
+
+# Evaluate the model's performance using metrics like Mean Squared Error (MSE)
+from sklearn.metrics import mean_squared_error
+mse = mean_squared_error(test['Provocation Index'], predictions)
+
+
+# Load the new dataset
+try:
+    origin_data = pd.read_excel("/mnt/data/origin data.xlsx", engine='openpyxl')
+    data_preview = origin_data.head()
+except Exception as e:
+    data_preview = str(e)
+
+data_preview
+
+
+# Create lag features for both indices
+origin_data['도발지수_lag1'] = origin_data['도발지수'].shift(1)
+origin_data['비난지수_lag1'] = origin_data['비난지수'].shift(1)
+
+# Drop rows with NaN values (due to the shift operation)
+origin_data = origin_data.dropna()
+
+# Split the data into training (2011-2021) and testing (2022) sets
+train_data = origin_data[origin_data['날짜'] < "2022-01-01"]
+test_data = origin_data[origin_data['날짜'] >= "2022-01-01"]
+
+# Display the first few rows of the processed dataset
+train_data.head()
+
+# Set up the training features and target variable
+features = ['도발지수_lag1', '비난지수_lag1']
+target = '도발지수'
+
+X_train = train_data[features]
+y_train = train_data[target]
+X_test = test_data[features]
+y_test = test_data[target]
+
+# Model training
+rf_model_combined = RandomForestRegressor(random_state=0)
+rf_model_combined.fit(X_train, y_train)
+
+# Prediction
+rf_predictions_combined = rf_model_combined.predict(X_test)
+
+# Calculate MSE
+mse_combined = mean_squared_error(y_test, rf_predictions_combined)
+
+mse_combined
+
+
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.svm import SVR
+
+# Initialize models
+models = {
+    'Linear Regression': LinearRegression(),
+    'Decision Tree Regressor': DecisionTreeRegressor(random_state=0),
+    'Gradient Boosting Regressor': GradientBoostingRegressor(random_state=0),
+    'Support Vector Regressor': SVR(kernel='linear')
+}
+
+# Train models and collect MSE values
+mse_values = {}
+
+for model_name, model in models.items():
+    model.fit(X_train, y_train)
+    predictions = model.predict(X_test)
+    mse_values[model_name] = mean_squared_error(y_test, predictions)
+
+mse_values
+
+
+from sklearn.metrics import r2_score
+
+# Get predictions from each model for the test set
+predicted_values = {}
+for model_name, model in models.items():
+    predicted_values[model_name] = model.predict(X_test)
+
+# Create a DataFrame for the first sheet: comparison of actual vs. predicted values
+comparison_df = pd.DataFrame({
+    'Date': test_data['날짜'].values,
+    'Actual Values': y_test.values
+})
+
+for model_name, predictions in predicted_values.items():
+    comparison_df[model_name + ' Predictions'] = predictions
+
+# Create a DataFrame for the second sheet: evaluation metrics
+metrics_df = pd.DataFrame({
+    'Model': list(models.keys()),
+    'MSE': [mse_values[model_name] for model_name in models.keys()],
+    'R^2': [r2_score(y_test, predicted_values[model_name]) for model_name in models.keys()]
+})
+
+# Save the DataFrames to Excel with two sheets
+excel_filepath = "/mnt/data/model_comparison_evaluation.xlsx"
+with pd.ExcelWriter(excel_filepath) as writer:
+    comparison_df.to_excel(writer, sheet_name='Actual vs Predicted', index=False)
+    metrics_df.to_excel(writer, sheet_name='Evaluation Metrics', index=False)
+
+excel_filepath
+
+
