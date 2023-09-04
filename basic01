@@ -1,0 +1,258 @@
+import pandas as pd
+
+# Loading the Excel file
+data = pd.read_excel("/mnt/data/도발지수 원본으로 다시 분석.xlsx")
+
+# Compute descriptive statistics for the entire dataset
+descriptive_stats = data.describe()
+
+descriptive_stats
+
+import matplotlib.pyplot as plt
+
+# Assuming the index of the dataframe represents the dates, set it as the dataframe's index
+data.index = pd.to_datetime(data.index)
+
+# Extracting '도발지수 (Provocation Index)' column for analysis
+provocation_index = data['도발지수']
+
+# Plotting the time series data
+plt.figure(figsize=(14, 7))
+provocation_index.plot(title="도발지수 (Provocation Index) Time Series", grid=True)
+plt.xlabel('Year')
+plt.ylabel('도발지수')
+plt.tight_layout()
+plt.show()
+
+
+import statsmodels.api as sm
+
+# Fit the SARIMA model with the parameters (1,0,0)(1,1,1,12)
+sarima_model = sm.tsa.statespace.SARIMAX(provocation_index,
+                                         order=(1,0,0),
+                                         seasonal_order=(1,1,1,12),
+                                         enforce_stationarity=False,
+                                         enforce_invertibility=False).fit(disp=-1)
+
+# Display the summary of the model
+sarima_summary = sarima_model.summary()
+
+sarima_summary
+
+
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+
+# Fit the Triple Exponential Smoothing model
+ets_model = ExponentialSmoothing(provocation_index, trend='add', seasonal='add', seasonal_periods=12).fit()
+
+# Extract fitted values for visualization later
+ets_fitted_values = ets_model.fittedvalues
+
+ets_model.summary()
+
+
+from statsmodels.tsa.seasonal import seasonal_decompose
+
+# Perform STL decomposition
+stl_result = seasonal_decompose(provocation_index, model='additive', period=12)
+
+# Plot the decomposition
+fig = stl_result.plot()
+fig.set_size_inches(14, 8)
+plt.tight_layout()
+plt.show()
+
+
+# Forecasting using SARIMA and ETS models for 2022
+sarima_forecast = sarima_model.get_forecast(steps=365).predicted_mean
+ets_forecast = ets_model.forecast(steps=365)
+
+# Visualization
+plt.figure(figsize=(14, 7))
+
+# Original data
+provocation_index.plot(label="Original Data", legend=True)
+
+# Fitted values
+ets_fitted_values.plot(label="ETS Fitted Values", legend=True, linestyle='--')
+sarima_model.fittedvalues.plot(label="SARIMA Fitted Values", legend=True, linestyle='--')
+
+# Forecasts for 2022
+sarima_forecast.plot(label="SARIMA Forecast (2022)", legend=True, color='red')
+ets_forecast.plot(label="ETS Forecast (2022)", legend=True, color='green')
+
+plt.title("도발지수 (Provocation Index) with Forecasts for 2022")
+plt.xlabel('Year')
+plt.ylabel('도발지수')
+plt.tight_layout()
+plt.grid(True)
+plt.show()
+
+
+
+# Correcting the compilation process
+forecast_df = pd.DataFrame({
+    'Date': pd.date_range(start=start_date, periods=365, freq='D'),
+    'SARIMA Forecast': sarima_forecast.values,
+    'ETS Forecast': ets_forecast.values
+})
+
+# If actual values for 2022 are available, we add them to the DataFrame
+if not actual_2022.empty:
+    forecast_df['Actual Values'] = actual_2022.values
+
+# Saving the corrected forecasted results to Excel
+forecast_filepath_corrected = "/mnt/data/corrected_forecast_results_2022.xlsx"
+forecast_df.to_excel(forecast_filepath_corrected, index=False)
+
+forecast_filepath_corrected
+
+
+# Correctly aligning the actual values for 2022 with the forecasted values
+actual_2022_aligned = provocation_index[start_date:start_date + pd.Timedelta(days=364)].reindex(pd.date_range(start=start_date, periods=365, freq='D'))
+
+# Creating the corrected comparison DataFrame
+corrected_comparison_df = pd.DataFrame({
+    'Date': pd.date_range(start=start_date, periods=365, freq='D'),
+    'Actual Values': actual_2022_aligned.values,
+    'SARIMA Forecast': sarima_forecast.values,
+    'ETS Forecast': ets_forecast.values
+})
+
+# Saving the corrected comparison results to Excel
+corrected_comparison_filepath = "/mnt/data/corrected_comparison_forecast_results_2022.xlsx"
+corrected_comparison_df.to_excel(corrected_comparison_filepath, index=False)
+
+corrected_comparison_filepath
+
+
+# Correcting the date format
+data_for_ml['ds'] = pd.date_range(start='2011-01-01', periods=len(data_for_ml), freq='D')
+
+# Verifying the corrected date format
+data_for_ml.tail(15)
+
+
+
+# Create lag features with a 1-day lag
+lagged_data_1_day = create_lag_features(data_for_ml, lag_days_1)
+
+# Drop NA values (as a result of creating lag features)
+lagged_data_1_day = lagged_data_1_day.dropna()
+
+# Split data into training and testing sets
+train_data = lagged_data_1_day[lagged_data_1_day['ds'] < "2022-01-01"]
+test_data = lagged_data_1_day[lagged_data_1_day['ds'] >= "2022-01-01"]
+
+# Separate features and target variable
+X_train = train_data.drop(columns=['ds', 'y', 'rolling_mean'])
+X_test = test_data.drop(columns=['ds', 'y', 'rolling_mean'])
+y_train = train_data['y']
+y_test = test_data['y']
+
+# Train Linear Regression model
+lr_model.fit(X_train, y_train)
+
+# Predict using the model
+lr_predictions = lr_model.predict(X_test)
+
+# Evaluate the model's performance
+lr_mse = mean_squared_error(y_test, lr_predictions)
+
+lr_mse
+
+
+
+from sklearn.tree import DecisionTreeRegressor
+
+# Train Decision Tree Regressor model
+dt_model = DecisionTreeRegressor(random_state=0)
+dt_model.fit(X_train, y_train)
+
+# Predict using the model
+dt_predictions = dt_model.predict(X_test)
+
+# Evaluate the model's performance
+dt_mse = mean_squared_error(y_test, dt_predictions)
+
+dt_mse
+
+
+from sklearn.ensemble import RandomForestRegressor
+
+# Train Random Forest Regressor model
+rf_model = RandomForestRegressor(random_state=0, n_estimators=100)
+rf_model.fit(X_train, y_train)
+
+# Predict using the model
+rf_predictions = rf_model.predict(X_test)
+
+# Evaluate the model's performance
+rf_mse = mean_squared_error(y_test, rf_predictions)
+
+rf_mse
+
+
+from sklearn.ensemble import GradientBoostingRegressor
+
+# Train Gradient Boosting Regressor model
+gb_model = GradientBoostingRegressor(random_state=0, n_estimators=100)
+gb_model.fit(X_train, y_train)
+
+# Predict using the model
+gb_predictions = gb_model.predict(X_test)
+
+# Evaluate the model's performance
+gb_mse = mean_squared_error(y_test, gb_predictions)
+
+gb_mse
+
+
+from sklearn.svm import SVR
+
+# Train Support Vector Regressor model
+svr_model = SVR(kernel='linear')
+svr_model.fit(X_train, y_train)
+
+# Predict using the model
+svr_predictions = svr_model.predict(X_test)
+
+# Evaluate the model's performance
+svr_mse = mean_squared_error(y_test, svr_predictions)
+
+svr_mse
+
+
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense, LSTM
+from sklearn.preprocessing import MinMaxScaler
+
+# Reshape data for LSTM input
+X_train_lstm = np.reshape(X_train.values, (X_train.shape[0], 1, X_train.shape[1]))
+X_test_lstm = np.reshape(X_test.values, (X_test.shape[0], 1, X_test.shape[1]))
+
+# Data scaling
+scaler = MinMaxScaler(feature_range=(0, 1))
+y_train_scaled = scaler.fit_transform(y_train.values.reshape(-1, 1))
+y_test_scaled = scaler.transform(y_test.values.reshape(-1, 1))
+
+# LSTM model
+model = Sequential()
+model.add(LSTM(50, input_shape=(X_train_lstm.shape[1], X_train_lstm.shape[2])))
+model.add(Dense(1))
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Train the model
+model.fit(X_train_lstm, y_train_scaled, epochs=50, batch_size=32, verbose=0, shuffle=False)
+
+# Predict using the model
+lstm_predictions_scaled = model.predict(X_test_lstm)
+lstm_predictions = scaler.inverse_transform(lstm_predictions_scaled)
+
+# Evaluate the model's performance
+lstm_mse = mean_squared_error(y_test, lstm_predictions)
+
+lstm_mse
+
+
