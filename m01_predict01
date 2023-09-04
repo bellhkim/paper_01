@@ -1,0 +1,38 @@
+# Import necessary libraries
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+
+# Prepare the training data
+df['도발지수_lag1'] = df['도발지수'].shift(1)
+train_data = df[(df['date'].dt.year >= 2011) & (df['date'].dt.year < 2022)].dropna()
+
+X_train = train_data[['도발지수_lag1']]
+y_train = train_data['도발지수']
+
+# Prepare the testing data
+test_data = df[df['date'].dt.year == 2022]
+X_test = test_data[['도발지수_lag1']]
+y_test = test_data['도발지수']
+
+# Define the models
+models = {
+    "Linear Regression": LinearRegression(),
+    "Decision Tree": DecisionTreeRegressor(),
+    "Random Forest": RandomForestRegressor(),
+    "SVM": SVR()
+}
+
+# Train and evaluate each model
+predictions = {}
+for model_name, model in models.items():
+    model.fit(X_train, y_train)
+    predictions[model_name] = model.predict(X_test)
+
+# Calculate RMSE for each model
+rmse = {}
+for model_name, prediction in predictions.items():
+    rmse[model_name] = sqrt(mean_squared_error(y_test, prediction))
+
+rmse, predictions
