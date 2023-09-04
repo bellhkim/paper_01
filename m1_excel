@@ -1,0 +1,5 @@
+# Add the actual values to the DataFrame
+predictions_df['Actual'] = df[df['date'].dt.year == 2022]['도발지수'].reset_index(drop=True)
+
+# Save the DataFrame to an Excel file
+predictions_df.to_excel("/mnt/data/2022_predictions_vs_actual.xlsx", index=False)
