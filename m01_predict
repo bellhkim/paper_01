@@ -1,0 +1,8 @@
+# Create a DataFrame to store the predictions
+predictions_df = pd.DataFrame(predictions)
+predictions_df['date'] = df[df['date'].dt.year == 2022]['date'].reset_index(drop=True)
+
+# Reorder the columns
+predictions_df = predictions_df[['date'] + list(models.keys())]
+
+predictions_df.head()
