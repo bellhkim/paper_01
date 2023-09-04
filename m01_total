@@ -1,0 +1,619 @@
+# Importing necessary libraries
+import pandas as pd
+
+# Loading the "result" sheet from the provided Excel file
+file_path = "/mnt/data/ml data(total).xlsx"
+result_sheet = pd.read_excel(file_path, sheet_name="result")
+
+# Displaying the first few rows of the data
+result_sheet.head()
+
+
+
+
+
+# Extracting the performance metrics for the requested models from the "result" sheet
+requested_models = [
+    "SARIMA",
+    "LR Predictions",
+    "Ridge Predictions",
+    "SVR Predictions",
+    "RF Predictions",
+    "GB Predictions",
+]
+result_requested_models = result_sheet[result_sheet["Model"].isin(requested_models)]
+result_requested_models
+
+
+
+
+# Making sure the 'Date' column is in datetime format
+data_new['Date'] = pd.to_datetime(data_new['Date'])
+
+# Filtering the data for the years 2011 to 2021
+train_data = data_new[data_new['Date'].dt.year <= 2021]
+
+# Displaying the first and last few rows of the training data
+train_data.head(), train_data.tail()
+
+
+
+
+from sklearn.linear_model import LinearRegression
+
+# Defining the independent variables (P2 and B0) and the dependent variable (P1)
+X_train = train_data[['P2', 'B0']]
+y_train = train_data['P1']
+
+# Creating and fitting the linear regression model
+linear_model = LinearRegression()
+linear_model.fit(X_train, y_train)
+
+# Preparing the data for 2022 for prediction
+predict_data_2022 = data_new[data_new['Date'].dt.year == 2022][['P2', 'B0']]
+
+# Predicting P1 for 2022
+predictions_2022 = linear_model.predict(predict_data_2022)
+
+# Adding the predictions to the dataset
+data_2022 = data_new[data_new['Date'].dt.year == 2022].copy()
+data_2022['Predicted_P1'] = predictions_2022
+
+# Displaying the first few rows of the predictions for 2022
+data_2022.head()
+
+
+
+
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import numpy as np
+
+# Extracting the actual and predicted values for 2022
+actual_values = data_2022['P1']
+predicted_values = data_2022['Predicted_P1']
+
+# Calculating the evaluation metrics
+mae = mean_absolute_error(actual_values, predicted_values)
+mse = mean_squared_error(actual_values, predicted_values)
+rmse = np.sqrt(mse)
+r2 = r2_score(actual_values, predicted_values)
+
+# Calculating the prediction success rate as the percentage of correct predictions
+prediction_success_rate = 100 * np.mean(np.isclose(actual_values, predicted_values, atol=mae))
+
+mae, mse, rmse, r2, prediction_success_rate
+
+
+
+
+# Creating a new Excel writer object
+output_file_path = "/mnt/data/prediction_evaluation.xlsx"
+with pd.ExcelWriter(output_file_path) as writer:
+    # Writing the 2022 actual and predicted values to sheet 1
+    data_2022[['Date', 'P1', 'Predicted_P1']].to_excel(writer, sheet_name='2022년의 실제값과 예측값', index=False)
+    
+    # Creating a DataFrame for the evaluation results
+    evaluation_results = pd.DataFrame({
+        'Metric': ['Mean Absolute Error', 'Mean Squared Error', 'Root Mean Squared Error', 'R-Squared', 'Prediction Success Rate'],
+        'Value': [mae, mse, rmse, r2, prediction_success_rate]
+    })
+    
+    # Writing the evaluation results to sheet 2
+    evaluation_results.to_excel(writer, sheet_name='평가결과', index=False)
+
+output_file_path
+
+
+
+
+# Importing necessary libraries again
+import pandas as pd
+
+# Defining the file path for the newly uploaded file
+file_path_new = "/mnt/data/0814 01.xlsx"
+
+# Loading the newly uploaded Excel file
+data_new = pd.read_excel(file_path_new)
+
+# Displaying the first few rows of the data to understand the structure
+data_new.head()
+
+
+
+
+# Filtering the data for the years 2011 to 2021
+train_data = data_new[data_new['Date'].dt.year <= 2021]
+
+# Creating and fitting the linear regression model
+X_train = train_data[['P2', 'BB']]
+y_train = train_data['P1']
+linear_model = LinearRegression()
+linear_model.fit(X_train, y_train)
+
+# Preparing the data for 2022 for prediction
+predict_data_2022 = data_new[data_new['Date'].dt.year == 2022][['P2', 'BB']]
+
+# Predicting P1 for 2022
+predictions_2022 = linear_model.predict(predict_data_2022)
+
+# Adding the predictions to the dataset
+data_2022 = data_new[data_new['Date'].dt.year == 2022].copy()
+data_2022['Predicted_P1'] = predictions_2022
+
+# Displaying the first few rows of the predictions for 2022
+data_2022.head()
+
+
+
+
+# Calculating the evaluation metrics
+mae = mean_absolute_error(data_2022['P1'], data_2022['Predicted_P1'])
+mse = mean_squared_error(data_2022['P1'], data_2022['Predicted_P1'])
+rmse = np.sqrt(mse)
+r2 = r2_score(data_2022['P1'], data_2022['Predicted_P1'])
+
+# Creating a DataFrame for the evaluation results
+evaluation_results = pd.DataFrame({
+    'Metric': ['Mean Absolute Error', 'Mean Squared Error', 'Root Mean Squared Error', 'R-Squared'],
+    'Value': [mae, mse, rmse, r2]
+})
+
+# Creating the Excel file with two sheets
+output_file_path = "/mnt/data/prediction_evaluation_new.xlsx"
+with pd.ExcelWriter(output_file_path) as writer:
+    data_2022[['Date', 'P1', 'Predicted_P1']].to_excel(writer, sheet_name='2022년의 실제값과 예측값', index=False)
+    evaluation_results.to_excel(writer, sheet_name='평가결과', index=False)
+
+output_file_path
+
+
+
+
+# Importing the necessary evaluation metrics
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import numpy as np
+
+# Calculating the evaluation metrics
+mae = mean_absolute_error(data_2022['P1'], data_2022['Predicted_P1'])
+mse = mean_squared_error(data_2022['P1'], data_2022['Predicted_P1'])
+rmse = np.sqrt(mse)
+r2 = r2_score(data_2022['P1'], data_2022['Predicted_P1'])
+
+# Creating a DataFrame for the evaluation results
+evaluation_results = pd.DataFrame({
+    'Metric': ['Mean Absolute Error', 'Mean Squared Error', 'Root Mean Squared Error', 'R-Squared'],
+    'Value': [mae, mse, rmse, r2]
+})
+
+# Creating the Excel file with two sheets
+output_file_path = "/mnt/data/prediction_evaluation_new.xlsx"
+with pd.ExcelWriter(output_file_path) as writer:
+    data_2022[['Date', 'P1', 'Predicted_P1']].to_excel(writer, sheet_name='2022년의 실제값과 예측값', index=False)
+    evaluation_results.to_excel(writer, sheet_name='평가결과', index=False)
+
+output_file_path
+
+
+
+
+
+# Function to apply Moving Average with given window size
+def apply_moving_average(series, window_size):
+    return series.rolling(window_size).mean().shift(1)
+
+# Applying Moving Average with window size 3 to P1 for the years 2011-2021
+window_size = 3
+train_data['MA_Predicted_P1'] = apply_moving_average(train_data['P1'], window_size)
+
+# Appending the Moving Average predictions for 2022
+data_2022['MA_Predicted_P1'] = apply_moving_average(data_2022['P1'], window_size)
+
+# Displaying the first few rows of the predictions for 2022 using Moving Average
+data_2022.head()
+
+
+
+
+# Function to apply Simple Exponential Smoothing
+def apply_SES(series, smoothing_level):
+    model = SimpleExpSmoothing(series)
+    fit_model = model.fit(smoothing_level=smoothing_level)
+    return fit_model.fittedvalues
+
+# Applying Simple Exponential Smoothing with smoothing_level=0.6 to P1 for the years 2011-2021
+smoothing_level = 0.6
+train_data['SES_Predicted_P1'] = apply_SES(train_data['P1'], smoothing_level)
+
+# Appending the Simple Exponential Smoothing predictions for 2022
+data_2022['SES_Predicted_P1'] = apply_SES(data_2022['P1'], smoothing_level)
+
+# Displaying the first few rows of the predictions for 2022 using Simple Exponential Smoothing
+data_2022.head()
+
+
+
+
+# Function to apply Holt-Winters Exponential Smoothing (ETS)
+def apply_ETS(series, trend=None, seasonal=None, seasonal_periods=None):
+    model = ExponentialSmoothing(series, trend=trend, seasonal=seasonal, seasonal_periods=seasonal_periods)
+    fit_model = model.fit()
+    return fit_model.fittedvalues
+
+# Applying Holt-Winters Exponential Smoothing (ETS) to P1 for the years 2011-2021 with trend="add" and seasonal="add", seasonal_periods=12
+trend = "add"
+seasonal = "add"
+seasonal_periods = 12
+train_data['ETS_Predicted_P1'] = apply_ETS(train_data['P1'], trend=trend, seasonal=seasonal, seasonal_periods=seasonal_periods)
+
+# Appending the Holt-Winters Exponential Smoothing (ETS) predictions for 2022
+data_2022['ETS_Predicted_P1'] = apply_ETS(data_2022['P1'], trend=trend, seasonal=seasonal, seasonal_periods=seasonal_periods)
+
+# Displaying the first few rows of the predictions for 2022 using Holt-Winters Exponential Smoothing (ETS)
+data_2022.head()
+
+
+
+
+# Function to apply State Space Model using SARIMAX
+def apply_SARIMAX(series, order, seasonal_order):
+    model = SARIMAX(series, order=order, seasonal_order=seasonal_order)
+    fit_model = model.fit(disp=0)
+    return fit_model.fittedvalues
+
+# Applying State Space Model (SARIMAX) to P1 for the years 2011-2021 with order (p, d, q) = (1, 0, 1) and seasonal_order (P, D, Q, S) = (1, 1, 1, 12)
+order = (1, 0, 1)
+seasonal_order = (1, 1, 1, 12)
+train_data['SARIMAX_Predicted_P1'] = apply_SARIMAX(train_data['P1'], order, seasonal_order)
+
+# Appending the State Space Model (SARIMAX) predictions for 2022
+data_2022['SARIMAX_Predicted_P1'] = apply_SARIMAX(data_2022['P1'], order, seasonal_order)
+
+# Displaying the first few rows of the predictions for 2022 using State Space Model (SARIMAX)
+data_2022.head()
+
+
+
+
+
+# Saving the results to Excel sheets
+output_path = '/mnt/data/2022_P1_Predictions_Evaluation.xlsx'
+
+with pd.ExcelWriter(output_path) as writer:
+    # Sheet 1: 2022 Predicted P1 values
+    data_2022.to_excel(writer, sheet_name='2022_Predicted_P1_Values', index=False)
+
+# Providing the download link
+output_path
+
+
+
+
+from sklearn.linear_model import LinearRegression, Ridge
+from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+
+# Preparing the features and target for training
+X_train = train_data[['P2', 'BB']]
+y_train = train_data['P1']
+
+# Preparing the features for 2022 predictions
+X_2022 = data_2022[['P2', 'BB']]
+
+# Function to apply a machine learning model and make predictions
+def apply_model(model, X_train, y_train, X_test):
+    model.fit(X_train, y_train)
+    return model.predict(X_test)
+
+# Applying SARIMA
+sarima_model = SARIMAX(train_data['P1'], order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
+sarima_fit = sarima_model.fit(disp=0)
+data_2022['SARIMA_Predicted_P1'] = sarima_fit.predict(start=0, end=len(data_2022) - 1, dynamic=False)
+
+# Applying Linear Regression
+data_2022['LR_Predicted_P1'] = apply_model(LinearRegression(), X_train, y_train, X_2022)
+
+# Applying Ridge Regression
+data_2022['Ridge_Predicted_P1'] = apply_model(Ridge(), X_train, y_train, X_2022)
+
+# Applying Support Vector Machine
+data_2022['SVR_Predicted_P1'] = apply_model(SVR(), X_train, y_train, X_2022)
+
+# Applying Random Forest
+data_2022['RF_Predicted_P1'] = apply_model(RandomForestRegressor(), X_train, y_train, X_2022)
+
+# Applying Gradient Boosting
+data_2022['GB_Predicted_P1'] = apply_model(GradientBoostingRegressor(), X_train, y_train, X_2022)
+
+# Displaying the first few rows of the predictions for 2022
+data_2022.head()
+
+
+
+
+# Saving the results to Excel sheets
+output_path_ml = '/mnt/data/2022_P1_ML_Predictions.xlsx'
+
+with pd.ExcelWriter(output_path_ml) as writer:
+    # Sheet 1: 2022 Predicted P1 values using different ML models
+    data_2022.to_excel(writer, sheet_name='2022_ML_Predicted_P1_Values', index=False)
+
+# Providing the download link
+output_path_ml
+
+
+
+
+# Loading the Sheet 2 from the uploaded Excel file
+sheet_2_path = '/mnt/data/0814 01.xlsx'
+sheet_2_data = pd.read_excel(sheet_2_path, sheet_name=1)
+
+# Displaying the first few rows of Sheet 2
+sheet_2_data.head()
+
+
+
+
+# Dropping rows with NaN values for accurate evaluation
+sheet_2_data_no_nan = sheet_2_data.dropna()
+
+# Actual values (after handling NaN)
+y_true_no_nan = sheet_2_data_no_nan['P1']
+
+# Re-evaluating each model after handling NaN values
+evaluation_results_no_nan = {}
+for model in models:
+    y_pred = sheet_2_data_no_nan[model]
+    evaluation_results_no_nan[model] = evaluate_model(y_true_no_nan, y_pred)
+
+# Converting the results to a DataFrame
+evaluation_df_no_nan = pd.DataFrame.from_dict(evaluation_results_no_nan, orient='index')
+
+# Displaying the evaluation results
+evaluation_df_no_nan
+
+
+
+
+# Saving the evaluation results to Excel sheet
+evaluation_output_path = '/mnt/data/2022_P1_Evaluation_Results.xlsx'
+
+with pd.ExcelWriter(evaluation_output_path) as writer:
+    # Sheet: Evaluation Results
+    evaluation_df_no_nan.to_excel(writer, sheet_name='Evaluation_Results')
+
+# Providing the download link
+evaluation_output_path
+
+
+
+
+# Preparing the features and target for training using only P2
+X_train_P2 = train_data[['P2']]
+X_2022_P2 = data_2022[['P2']]
+
+# Applying SARIMA
+sarima_model_P2 = SARIMAX(train_data['P1'], exog=train_data['P2'], order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
+sarima_fit_P2 = sarima_model_P2.fit(disp=0)
+data_2022['SARIMA_P2_Predicted_P1'] = sarima_fit_P2.predict(start=0, end=len(data_2022) - 1, exog=data_2022[['P2']], dynamic=False)
+
+# Applying Linear Regression
+data_2022['LR_P2_Predicted_P1'] = apply_model(LinearRegression(), X_train_P2, y_train, X_2022_P2)
+
+# Applying Ridge Regression
+data_2022['Ridge_P2_Predicted_P1'] = apply_model(Ridge(), X_train_P2, y_train, X_2022_P2)
+
+# Applying Support Vector Machine
+data_2022['SVR_P2_Predicted_P1'] = apply_model(SVR(), X_train_P2, y_train, X_2022_P2)
+
+# Applying Random Forest
+data_2022['RF_P2_Predicted_P1'] = apply_model(RandomForestRegressor(), X_train_P2, y_train, X_2022_P2)
+
+# Applying Gradient Boosting
+data_2022['GB_P2_Predicted_P1'] = apply_model(GradientBoostingRegressor(), X_train_P2, y_train, X_2022_P2)
+
+# Displaying the first few rows of the predictions for 2022 using P2 as the feature
+data_2022.head()
+
+
+
+
+# Saving the results to Excel sheets using P2 as the feature
+output_path_p2 = '/mnt/data/2022_P1_P2_Predictions.xlsx'
+
+with pd.ExcelWriter(output_path_p2) as writer:
+    # Sheet 1: 2022 Predicted P1 values using P2 as the feature
+    data_2022.to_excel(writer, sheet_name='2022_P2_Predicted_P1_Values', index=False)
+
+# Providing the download link
+output_path_p2
+
+
+
+
+# Simplifying the column names
+data_2022_simplified = data_2022.rename(columns={
+    'SARIMA_P2_Predicted_P1': 'SARIMA',
+    'LR_P2_Predicted_P1': 'LR',
+    'Ridge_P2_Predicted_P1': 'Ridge',
+    'SVR_P2_Predicted_P1': 'SVR',
+    'RF_P2_Predicted_P1': 'RF',
+    'GB_P2_Predicted_P1': 'GB'
+})
+
+# Saving the simplified results to Excel sheets
+output_path_simplified = '/mnt/data/2022_P1_P2_Predictions_Simplified.xlsx'
+
+with pd.ExcelWriter(output_path_simplified) as writer:
+    # Sheet 1: 2022 Predicted P1 values using P2 as the feature (Simplified Column Names)
+    data_2022_simplified.to_excel(writer, sheet_name='2022_P2_Predicted_P1_Simplified', index=False)
+
+# Providing the download link
+output_path_simplified
+
+
+
+
+# Saving the corrected evaluation results to Excel sheet with a shorter sheet name
+short_sheet_name = 'Evaluation_Results_Short'
+
+with pd.ExcelWriter(evaluation_output_path_simplified_no_nan) as writer:
+    # Sheet: Evaluation Results (Simplified Column Names, No NaN, Short Sheet Name)
+    evaluation_df_simplified_no_nan.to_excel(writer, sheet_name=short_sheet_name)
+
+# Providing the download link
+evaluation_output_path_simplified_no_nan
+
+
+
+
+# Preparing the features and target for training using only P1
+X_train_P1 = train_data[['P1']].values[:-1]  # Excluding the last value for shifted prediction
+X_2022_P1 = data_2022[['P1']].values[:-1]    # Excluding the last value for shifted prediction
+y_train_P1 = train_data['P1'].values[1:]     # Shifting by 1 to match the previous P1 value
+
+# Applying SARIMA
+sarima_model_P1 = SARIMAX(y_train_P1, order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
+sarima_fit_P1 = sarima_model_P1.fit(disp=0)
+data_2022['SARIMA_P1_Predicted_P1'] = sarima_fit_P1.predict(start=1, end=len(data_2022), dynamic=False)
+
+# Applying Linear Regression
+data_2022['LR_P1_Predicted_P1'] = apply_model(LinearRegression(), X_train_P1, y_train_P1, X_2022_P1)
+
+# Applying Ridge Regression
+data_2022['Ridge_P1_Predicted_P1'] = apply_model(Ridge(), X_train_P1, y_train_P1, X_2022_P1)
+
+# Applying Support Vector Machine
+data_2022['SVR_P1_Predicted_P1'] = apply_model(SVR(), X_train_P1, y_train_P1, X_2022_P1)
+
+# Applying Random Forest
+data_2022['RF_P1_Predicted_P1'] = apply_model(RandomForestRegressor(), X_train_P1, y_train_P1, X_2022_P1)
+
+# Applying Gradient Boosting
+data_2022['GB_P1_Predicted_P1'] = apply_model(GradientBoostingRegressor(), X_train_P1, y_train_P1, X_2022_P1)
+
+# Displaying the first few rows of the predictions for 2022 using P1 as the feature
+data_2022.head()
+
+
+
+
+# Applying ARIMA without the disp argument
+arima_model_P1_Lag1 = ARIMA(y_train_P1_Lag1, order=(1
+
+
+
+
+# Applying ARIMA without the disp argument
+arima_model_P1_Lag1 = ARIMA(y_train_P1_Lag1, order=(1, 0, 0))
+arima_fit_P1_Lag1 = arima_model_P1_Lag1.fit()
+arima_P1_Lag1_predictions = arima_fit_P1_Lag1.predict(start=1, end=len(X_2022_P1_Lag1), dynamic=False)
+
+# Adding ARIMA predictions to the DataFrame
+data_2022_P1_Lag1_predictions_non_sarima['ARIMA_P1_Predicted_P1'] = arima_P1_Lag1_predictions
+
+# Saving the predictions for 2022 using P1 Lag 1 as the feature to Excel sheet (excluding first row due to lag)
+output_path_P1_Lag1_non_sarima_arima = '/mnt/data/2022_P1_P1_Lag1_Predictions_Non_ARIMA.xlsx'
+
+with pd.ExcelWriter(output_path_P1_Lag1_non_sarima_arima) as writer:
+    # Sheet: 2022 Predicted P1 values using P1 Lag 1 as the feature (including ARIMA)
+    data_2022_P1_Lag1_predictions_non_sarima.to_excel(writer, sheet_name='2022_P1_P1_Lag1_Predictions_ARIMA', index=False)
+
+# Providing the download link
+output_path_P1_Lag1_non_sarima_arima
+
+
+
+
+from sklearn.preprocessing import StandardScaler
+
+# Creating rolling mean and rolling std features for P1 (window size = 3)
+train_data['P1_Rolling_Mean'] = train_data['P1'].rolling(window=3).mean().shift(1)  # Lag 1
+train_data['P1_Rolling_Std'] = train_data['P1'].rolling(window=3).std().shift(1)    # Lag 1
+
+# Preparing the features and target for training using P1 rolling mean and std
+X_train_P1_Rolling = train_data[['P1_Rolling_Mean', 'P1_Rolling_Std']][3:].values  # Excluding first 3 rows due to window size
+y_train_P1_Rolling = train_data['P1'][3:].values
+
+# Applying the same rolling mean and std to 2022 data
+data_2022['P1_Rolling_Mean'] = data_2022['P1'].rolling(window=3).mean().shift(1)
+data_2022['P1_Rolling_Std'] = data_2022['P1'].rolling(window=3).std().shift(1)
+X_2022_P1_Rolling = data_2022[['P1_Rolling_Mean', 'P1_Rolling_Std']][3:].values
+
+# Standardizing the features
+scaler = StandardScaler()
+X_train_P1_Rolling_scaled = scaler.fit_transform(X_train_P1_Rolling)
+X_2022_P1_Rolling_scaled = scaler.transform(X_2022_P1_Rolling)
+
+# Applying Linear Regression with the rolling features
+data_2022['LR_P1_Rolling_Predicted_P1'] = apply_model(LinearRegression(), X_train_P1_Rolling_scaled, y_train_P1_Rolling, X_2022_P1_Rolling_scaled)
+
+# Applying Ridge Regression with the rolling features
+data_2022['Ridge_P1_Rolling_Predicted_P1'] = apply_model(Ridge(), X_train_P1_Rolling_scaled, y_train_P1_Rolling, X_2022_P1_Rolling_scaled)
+
+# Displaying the first few rows of the predictions for 2022 using P1 rolling mean and std
+data_2022[3:].head()  # Excluding first 3 rows due to window size
+
+
+
+
+# Preparing the features and target for training using P1 with Lag 1 (excluding the first row due to lag)
+X_train_P1_Lag1_simple = train_data[['P1']].shift(1)[1:].values
+y_train_P1_Lag1_simple = train_data['P1'][1:].values
+X_2022_P1_Lag1_simple = data_2022[['P1']].shift(1)[1:].values
+
+# Standardizing the features for simplicity
+scaler_simple = StandardScaler()
+X_train_P1_Lag1_scaled_simple = scaler_simple.fit_transform(X_train_P1_Lag1_simple)
+X_2022_P1_Lag1_scaled_simple = scaler_simple.transform(X_2022_P1_Lag1_simple)
+
+# Applying Linear Regression with Lag 1
+data_2022['LR_P1_Lag1_Predicted_P1_Simple'] = apply_model(LinearRegression(), X_train_P1_Lag1_scaled_simple, y_train_P1_Lag1_simple, X_2022_P1_Lag1_scaled_simple)
+
+# Applying Ridge Regression with Lag 1
+data_2022['Ridge_P1_Lag1_Predicted_P1_Simple'] = apply_model(Ridge(), X_train_P1_Lag1_scaled_simple, y_train_P1_Lag1_simple, X_2022_P1_Lag1_scaled_simple)
+
+# Displaying the first few rows of the predictions for 2022 using P1 Lag 1 (simple approach)
+data_2022[1:].head()  # Excluding first row due to lag
+
+
+
+
+# Loading the new Excel file and extracting Sheet 1
+new_file_path = '/mnt/data/0814 01.xlsx'
+sheet_1_data = pd.read_excel(new_file_path, sheet_name='Sheet1')
+
+# Splitting the data into training (2011~2021) and 2022 data for P1
+train_data_P1_new = sheet_1_data[sheet_1_data['Year'] < 2022]['P1'].values
+data_2022_P1_new = sheet_1_data[sheet_1_data['Year'] == 2022]['P1'].values
+
+# Preparing the features and target for training using P1 with Lag 1 (excluding the first row due to lag)
+X_train_P1_Lag1_new = train_data_P1_new[:-1].reshape(-1, 1)
+y_train_P1_Lag1_new = train_data_P1_new[1:]
+
+# The prediction for 2022 will be the last value of the training data for the lag feature
+X_2022_P1_Lag1_new = train_data_P1_new[-1].reshape(-1, 1)
+
+# Applying Linear Regression with Lag 1
+lr_model_new = LinearRegression()
+lr_model_new.fit(X_train_P1_Lag1_new, y_train_P1_Lag1_new)
+lr_prediction_2022_P1_new = lr_model_new.predict(X_2022_P1_Lag1_new)
+
+# Applying Ridge Regression with Lag 1
+ridge_model_new = Ridge()
+ridge_model_new.fit(X_train_P1_Lag1_new, y_train_P1_Lag1_new)
+ridge_prediction_2022_P1_new = ridge_model_new.predict(X_2022_P1_Lag1_new)
+
+# Creating a DataFrame to store the predictions for 2022
+predictions_2022_P1_new = pd.DataFrame({
+    'LR_P1_Predicted_2022': lr_prediction_2022_P1_new,
+    'Ridge_P1_Predicted_2022': ridge_prediction_2022_P1_new,
+    'Actual_P1_2022': data_2022_P1_new
+})
+
+# Displaying the predictions
+predictions_2022_P1_new.head()
+
+
+
+
